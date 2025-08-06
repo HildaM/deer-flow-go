@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/RanFeng/ilog"
-	"github.com/cloudwego/eino-ext/components/tool/mcp"
 	"github.com/cloudwego/eino/components/prompt"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/compose"
@@ -120,14 +119,24 @@ func modifyCoderfunc(ctx context.Context, input []*schema.Message) []*schema.Mes
 func NewCoder[I, O any](ctx context.Context) *compose.Graph[I, O] {
 	cag := compose.NewGraph[I, O]()
 
+	// 使用修复版本的MCP工具，并过滤出python相关工具
+	allTools, err := GetFixedMCPTools(ctx)
+	if err != nil {
+		ilog.EventError(ctx, err, "failed_to_get_fixed_mcp_tools")
+		allTools = []tool.BaseTool{} // 如果失败，使用空工具列表
+	}
+
+	// 过滤出python相关的工具
 	researchTools := []tool.BaseTool{}
-	for mcpName, cli := range infra.MCPServer {
-		ts, err := mcp.GetTools(ctx, &mcp.Config{Cli: cli})
+	for _, t := range allTools {
+		info, err := t.Info(ctx)
 		if err != nil {
-			ilog.EventError(ctx, err, "builder_error")
+			continue
 		}
-		if strings.HasPrefix(mcpName, "python") {
-			researchTools = append(researchTools, ts...)
+		// 检查工具名称是否包含python相关关键词
+		if strings.Contains(strings.ToLower(info.Name), "python") ||
+			strings.Contains(strings.ToLower(info.Desc), "python") {
+			researchTools = append(researchTools, t)
 		}
 	}
 	ilog.EventDebug(ctx, "coder_end", "coder_tools", researchTools)
@@ -139,6 +148,9 @@ func NewCoder[I, O any](ctx context.Context) *compose.Graph[I, O] {
 		MessageModifier:       modifyCoderfunc,
 		StreamToolCallChecker: toolCallChecker,
 	})
+	if err != nil {
+		panic(err)
+	}
 
 	agentLambda, err := compose.AnyLambda(agent.Generate, agent.Stream, nil, nil)
 	if err != nil {

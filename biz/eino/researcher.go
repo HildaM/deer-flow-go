@@ -24,7 +24,6 @@ import (
 	"time"
 
 	"github.com/RanFeng/ilog"
-	"github.com/cloudwego/eino-ext/components/tool/mcp"
 	"github.com/cloudwego/eino/components/prompt"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/compose"
@@ -140,13 +139,11 @@ func toolCallChecker(_ context.Context, sr *schema.StreamReader[*schema.Message]
 func NewResearcher[I, O any](ctx context.Context) *compose.Graph[I, O] {
 	cag := compose.NewGraph[I, O]()
 
-	researchTools := []tool.BaseTool{}
-	for _, cli := range infra.MCPServer {
-		ts, err := mcp.GetTools(ctx, &mcp.Config{Cli: cli})
-		if err != nil {
-			ilog.EventError(ctx, err, "builder_error")
-		}
-		researchTools = append(researchTools, ts...)
+	// 使用修复版本的MCP工具
+	researchTools, err := GetFixedMCPTools(ctx)
+	if err != nil {
+		ilog.EventError(ctx, err, "failed_to_get_fixed_mcp_tools")
+		researchTools = []tool.BaseTool{} // 如果失败，使用空工具列表
 	}
 	ilog.EventDebug(ctx, "researcher_end", "research_tools", len(researchTools))
 
@@ -157,6 +154,9 @@ func NewResearcher[I, O any](ctx context.Context) *compose.Graph[I, O] {
 		MessageModifier:       modifyInputfunc,
 		StreamToolCallChecker: toolCallChecker,
 	})
+	if err != nil {
+		panic(err)
+	}
 
 	agentLambda, err := compose.AnyLambda(agent.Generate, agent.Stream, nil, nil)
 	if err != nil {
