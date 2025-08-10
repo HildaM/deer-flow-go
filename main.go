@@ -71,11 +71,21 @@ func runServer() {
 func runConsole() {
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, ilog.LogLevelKey, ilog.LevelInfo)
+
+	// 配置加载
 	conf.LoadDeerConfig(ctx)
+
+	// 初始化模型
 	infra.InitModel()
+
+	// 初始化 mcp 服务
 	infra.InitMCP()
+
+	// 读取用户终端输入
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("请输入你的需求： ")
+
+	// 请求模型
 	userPrompt, _ := reader.ReadString('\n')
 	userPrompt = strings.TrimSpace(userPrompt) // 去除换行符
 	userMessage := []*schema.Message{
