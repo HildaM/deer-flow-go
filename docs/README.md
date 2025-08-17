@@ -11,9 +11,10 @@
 - **[architecture.md](./architecture/architecture.md)** - 项目架构图和系统设计
   - 多智能体协作系统架构
   - DAG 工作流设计
-  - 各 Agent 节点的内部结构
+  - 各 Agent 节点的内部结构（Coordinator、Planner、Researcher、Coder等）
   - 状态管理机制
   - MCP 工具集成
+  - 技术实现细节和扩展性分析
 
 ### 🔧 Generics (Go 泛型技术)
 
@@ -44,6 +45,19 @@
   - 编译时类型安全验证
   - 运行时类型信息检查
   - 内存布局对比
+
+### 🔌 MCP (Model Context Protocol)
+
+包含 MCP 协议集成相关的文档：
+
+- **[README.md](./mcp/README.md)** - MCP 集成完整指南
+  - MCP 架构设计和系统集成
+  - Python MCP 服务器实现
+  - 搜索工具和代码执行工具
+  - 配置说明和环境设置
+  - Agent 中的 MCP 工具使用
+  - 开发调试和性能优化
+  - 安全考虑和最佳实践
 
 ## 🎯 文档使用指南
 

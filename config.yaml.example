@@ -11,7 +11,7 @@ mcp:
     python:
       command: "uv"
       args: [ "--directory",
-              "<your deer-go dir>/biz/mcps/python",
+              "<your deer-go dir>/mcps/python",
               "run",
               "server.py",
       ]

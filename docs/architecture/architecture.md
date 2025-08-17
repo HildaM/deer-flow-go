@@ -4,6 +4,82 @@
 
 `deer-flow-go` 是一个基于 CloudWeGo Eino 框架构建的多智能体协作系统，采用有向无环图(DAG)架构设计，实现了智能任务分发、计划生成、研究执行和报告生成的完整工作流程。
 
+### 项目目录结构
+
+
+```
+deer-flow-go/
+├── agent/                 # Agent 实现
+│   ├── agent.go          # Agent 接口定义
+│   ├── coordinator/      # 协调员角色
+│   │   └── coordinator.go
+│   ├── planner/          # 规划师角色
+│   │   └── planner.go
+│   ├── researcher/       # 研究员角色
+│   │   ├── researcher.go
+│   │   └── research_team.go
+│   ├── coder/            # 编码员角色
+│   │   └── coder.go
+│   ├── repoter/          # 报告员角色
+│   │   └── repoter.go
+│   ├── investigator/     # 背景调查员角色
+│   │   └── investigator.go
+│   ├── human/            # 人工反馈处理
+│   │   └── human.go
+│   └── comm/             # 通用组件
+│       └── comm.go
+├── entity/               # 数据实体
+│   ├── conf/             # 配置结构体
+│   │   ├── conf.go
+│   │   └── types.go
+│   ├── consts/           # 常量定义
+│   │   └── consts.go
+│   └── model/            # 数据模型
+│       ├── plan.go
+│       ├── server.go
+│       └── state.go
+├── repo/                 # 基础设施层
+│   ├── callback/         # 回调处理
+│   │   └── logger_callback.go
+│   ├── checkpoint/       # 检查点管理
+│   │   └── checkpoint.go
+│   ├── llm/              # LLM 模型服务
+│   │   └── llm.go
+│   ├── mcp/              # MCP 工具集成
+│   │   ├── mcp.go
+│   │   └── types.go
+│   └── template/         # 模板管理
+│       └── template.go
+├── mcps/                 # MCP 服务器
+│   └── python/           # Python MCP 服务器
+│       ├── server.py
+│       ├── pyproject.toml
+│       └── uv.lock
+├── prompts/              # 提示词模板
+│   ├── coordinator.md
+│   ├── planner.md
+│   ├── researcher.md
+│   ├── coder.md
+│   └── reporter.md
+├── docs/                 # 项目文档
+│   ├── README.md
+│   ├── architecture/
+│   │   └── architecture.md
+│   └── generics/
+│       ├── golang-generics-guide.md
+│       ├── generics-usage-analysis.md
+│       ├── go-generics-type-erasure.md
+│       └── generics-demo.go
+├── config.yaml.example   # 配置文件模板
+├── config.yaml          # 配置文件
+├── main.go              # 程序入口
+├── go.mod               # Go 模块文件
+├── go.sum               # Go 依赖锁定文件
+└── script/              # 脚本文件
+    └── bootstrap.sh
+```
+
+
 ## 系统架构
 
 ### 核心组件

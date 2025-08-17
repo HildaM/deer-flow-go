@@ -50,9 +50,9 @@ cd deer-flow-go
 
 #### 2. 安装 Python MCP 服务器依赖
 ```bash
-cd biz/mcps/python
+cd mcps/python
 uv sync
-cd ../../..
+cd ../..
 ```
 
 #### 3. 配置项目
@@ -60,10 +60,10 @@ cd ../../..
 复制配置模板并填入必要的 API 密钥：
 
 ```bash
-cp ./conf/deer-go.yaml.1 ./conf/deer-go.yaml
+cp config.yaml.example config.yaml
 ```
 
-编辑 `conf/deer-go.yaml` 文件，配置以下参数：
+编辑 `config.yaml` 文件，配置以下参数：
 
 ```yaml
 mcp:
@@ -74,7 +74,7 @@ mcp:
       env: { "TAVILY_API_KEY": "your-tavily-api-key" }
     python:  # Python 代码执行工具
       command: "uv"
-      args: [ "--directory", "/path/to/your/project/biz/mcps/python", "run", "server.py" ]
+      args: [ "--directory", "/path/to/your/project/mcps/python", "run", "server.py" ]
 
 model:
   default_model: "gpt-4"  # 或其他支持的模型
@@ -123,7 +123,7 @@ mcp:
     # Python 代码执行（推荐）
     python:
       command: "uv"
-      args: ["--directory", "/path/to/project/biz/mcps/python", "run", "server.py"]
+      args: ["--directory", "/path/to/project/mcps/python", "run", "server.py"]
 ```
 
 ### 模型配置
@@ -156,22 +156,74 @@ model:
 
 ```
 deer-flow-go/
-├── biz/                    # 业务逻辑
-│   ├── eino/              # Eino Agent 实现
-│   │   ├── coordinator.go  # 协调员角色
-│   │   ├── planner.go     # 规划师角色
-│   │   ├── researcher.go  # 研究员角色
-│   │   ├── coder.go       # 编码员角色
-│   │   └── reporter.go    # 报告员角色
-│   ├── handler/           # HTTP 处理器
-│   ├── infra/             # 基础设施
-│   ├── mcps/              # MCP 服务器
-│   │   └── python/        # Python MCP 服务器
-│   ├── model/             # 数据模型
-│   └── prompts/           # 提示词模板
-├── conf/                  # 配置文件
-├── main.go               # 程序入口
-└── run.sh                # 启动脚本
+├── agent/                 # Agent 实现
+│   ├── agent.go          # Agent 接口定义
+│   ├── coordinator/      # 协调员角色
+│   │   └── coordinator.go
+│   ├── planner/          # 规划师角色
+│   │   └── planner.go
+│   ├── researcher/       # 研究员角色
+│   │   ├── researcher.go
+│   │   └── research_team.go
+│   ├── coder/            # 编码员角色
+│   │   └── coder.go
+│   ├── repoter/          # 报告员角色
+│   │   └── repoter.go
+│   ├── investigator/     # 背景调查员角色
+│   │   └── investigator.go
+│   ├── human/            # 人工反馈处理
+│   │   └── human.go
+│   └── comm/             # 通用组件
+│       └── comm.go
+├── entity/               # 数据实体
+│   ├── conf/             # 配置结构体
+│   │   ├── conf.go
+│   │   └── types.go
+│   ├── consts/           # 常量定义
+│   │   └── consts.go
+│   └── model/            # 数据模型
+│       ├── plan.go
+│       ├── server.go
+│       └── state.go
+├── repo/                 # 基础设施层
+│   ├── callback/         # 回调处理
+│   │   └── logger_callback.go
+│   ├── checkpoint/       # 检查点管理
+│   │   └── checkpoint.go
+│   ├── llm/              # LLM 模型服务
+│   │   └── llm.go
+│   ├── mcp/              # MCP 工具集成
+│   │   ├── mcp.go
+│   │   └── types.go
+│   └── template/         # 模板管理
+│       └── template.go
+├── mcps/                 # MCP 服务器
+│   └── python/           # Python MCP 服务器
+│       ├── server.py
+│       ├── pyproject.toml
+│       └── uv.lock
+├── prompts/              # 提示词模板
+│   ├── coordinator.md
+│   ├── planner.md
+│   ├── researcher.md
+│   ├── coder.md
+│   └── reporter.md
+├── docs/                 # 项目文档
+│   ├── README.md
+│   ├── architecture/
+│   │   └── architecture.md
+│   └── generics/
+│       ├── golang-generics-guide.md
+│       ├── generics-usage-analysis.md
+│       ├── go-generics-type-erasure.md
+│       └── generics-demo.go
+├── config.yaml.example   # 配置文件模板
+├── config.yaml          # 配置文件
+├── main.go              # 程序入口
+├── go.mod               # Go 模块文件
+├── go.sum               # Go 依赖锁定文件
+└── script/              # 脚本文件
+    └── bootstrap.sh
 ```
 
 ### 添加新的 MCP 工具
@@ -182,11 +234,25 @@ deer-flow-go/
 
 ### 自定义 Agent 角色
 
-参考 `biz/eino/` 目录下的现有实现，创建新的 Agent 角色：
+参考 `agent/` 目录下的现有实现，创建新的 Agent 角色：
 
 ```go
-func NewCustomAgent[I, O any](ctx context.Context) *compose.Graph[I, O] {
+// 实现 Agent 接口
+type customAgentImpl[I, O any] struct {
+    llm *openai.ChatModel
+}
+
+func NewCustomAgent[I, O any](ctx context.Context) *customAgentImpl[I, O] {
+    return &customAgentImpl[I, O]{
+        llm: llm.NewChatModel(ctx),
+    }
+}
+
+func (c *customAgentImpl[I, O]) NewGraphNode(ctx context.Context) (key string, node compose.AnyGraph, nameOption compose.GraphAddNodeOpt) {
     // 实现自定义 Agent 逻辑
+    graph := compose.NewGraph[I, O]()
+    // 添加节点和边
+    return "custom_agent", graph, compose.WithNodeName("CustomAgent")
 }
 ```
 
@@ -200,7 +266,7 @@ func NewCustomAgent[I, O any](ctx context.Context) *compose.Graph[I, O] {
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # 重新安装依赖
-cd biz/mcps/python
+cd mcps/python
 uv sync --reinstall
 ```
 

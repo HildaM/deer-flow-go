@@ -8,7 +8,7 @@
 
 ### 1.1 实际调用示例
 
-在 `biz/handler/deer.go` 中，我们可以看到 `Builder` 函数的实际调用：
+在项目的主要处理逻辑中，我们可以看到 `Builder` 函数的实际调用：
 
 ```go
 // Build Graph

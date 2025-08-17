@@ -77,17 +77,22 @@ type Runnable[I, O any] interface {
 项目中所有 Agent 都遵循相同的泛型模式：
 
 ```go
-// Coordinator Agent
-func NewCAgent[I, O any](ctx context.Context) *compose.Graph[I, O]
+// Agent 接口定义
+type Agent[I, O any] interface {
+    NewGraphNode(ctx context.Context) (key string, node compose.AnyGraph, nameOption compose.GraphAddNodeOpt)
+}
 
-// Planner Agent
-func NewPlanner[I, O any](ctx context.Context) *compose.Graph[I, O]
+// Coordinator Agent 实现
+func NewCoordinator[I, O any](ctx context.Context) Agent[I, O]
 
-// Researcher Agent
-func NewResearcher[I, O any](ctx context.Context) *compose.Graph[I, O]
+// Planner Agent 实现
+func NewPlanner[I, O any](ctx context.Context) Agent[I, O]
 
-// Coder Agent
-func NewCoder[I, O any](ctx context.Context) *compose.Graph[I, O]
+// Researcher Agent 实现
+func NewSingleResearcher[I, O any](ctx context.Context) Agent[I, O]
+
+// Coder Agent 实现
+func NewCoder[I, O any](ctx context.Context) Agent[I, O]
 ```
 
 **设计优势：**
