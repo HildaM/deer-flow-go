@@ -170,6 +170,8 @@ func CreateMCPClients() (map[string]client.MCPClient, error) {
 				stdioConfig.Command,
 				env,
 				stdioConfig.Args...)
+
+			ilog.EventDebug(context.Background(), "create stdio mcp client", "name", name, "command", stdioConfig.Command, "args", stdioConfig.Args, "env", env)
 		}
 		if err != nil {
 			for _, c := range clients {
