@@ -241,10 +241,10 @@ func toolCallChecker(_ context.Context, sr *schema.StreamReader[*schema.Message]
 func NewResearcher[I, O any](ctx context.Context) *compose.Graph[I, O] {
 	cag := compose.NewGraph[I, O]()
 
-	// 使用修复版本的MCP工具，为Researcher提供搜索、分析等能力
-	researchTools, err := GetFixedMCPTools(ctx)
+	// 使用MCP工具，为Researcher提供搜索、分析等能力
+	researchTools, err := infra.GetMCPTools(ctx)
 	if err != nil {
-		ilog.EventError(ctx, err, "failed_to_get_fixed_mcp_tools")
+		ilog.EventError(ctx, err, "failed_to_get_mcp_tools")
 		researchTools = []tool.BaseTool{} // 如果失败，使用空工具列表
 	}
 	ilog.EventDebug(ctx, "researcher_end", "research_tools", len(researchTools))

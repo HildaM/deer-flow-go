@@ -71,6 +71,7 @@ func loadCoderMsg(ctx context.Context, name string, opts ...any) (output []*sche
 		for i := range state.CurrentPlan.Steps {
 			if state.CurrentPlan.Steps[i].ExecutionRes == nil {
 				curStep = &state.CurrentPlan.Steps[i]
+				ilog.EventDebug(ctx, "found_coder_step", "step", curStep)
 				break
 			}
 		}
@@ -88,11 +89,11 @@ func loadCoderMsg(ctx context.Context, name string, opts ...any) (output []*sche
 		)
 		// 设置模板变量，包含系统配置和当前任务信息
 		variables := map[string]any{
-			"locale":              state.Locale,              // 语言设置
-			"max_step_num":        state.MaxStepNum,          // 最大步骤数
-			"max_plan_iterations": state.MaxPlanIterations,   // 最大计划迭代次数
+			"locale":              state.Locale,                             // 语言设置
+			"max_step_num":        state.MaxStepNum,                         // 最大步骤数
+			"max_plan_iterations": state.MaxPlanIterations,                  // 最大计划迭代次数
 			"CURRENT_TIME":        time.Now().Format("2006-01-02 15:04:05"), // 当前时间
-			"user_input":          msg,                       // 用户输入消息
+			"user_input":          msg,                                      // 用户输入消息
 		}
 		// 格式化模板并生成最终的消息列表
 		output, err = promptTemp.Format(ctx, variables)
@@ -118,7 +119,7 @@ func loadCoderMsg(ctx context.Context, name string, opts ...any) (output []*sche
 // 2. 记录代码生成任务完成的日志，包含更新后的计划状态
 // 3. 设置流向为ResearchTeam，返回调度中心进行下一步决策
 func routerCoder(ctx context.Context, input *schema.Message, opts ...any) (output string, err error) {
-	//ilog.EventInfo(ctx, "routerResearcher", "input", input)
+	ilog.EventInfo(ctx, "routerResearcher", "input", input)
 	last := input
 	err = compose.ProcessState[*model.State](ctx, func(_ context.Context, state *model.State) error {
 		defer func() {
@@ -139,7 +140,7 @@ func routerCoder(ctx context.Context, input *schema.Message, opts ...any) (outpu
 		state.Goto = consts.ResearchTeam
 		return nil
 	})
-	return output, nil
+	return output, err
 }
 
 // modifyCoderfunc 消息内容修改器，用于处理Coder输入消息的长度限制
@@ -200,10 +201,10 @@ func NewCoder[I, O any](ctx context.Context) *compose.Graph[I, O] {
 	// 创建新的工作流图实例
 	cag := compose.NewGraph[I, O]()
 
-	// 使用修复版本的MCP工具，并过滤出python相关工具
-	allTools, err := GetFixedMCPTools(ctx)
+	// 使用MCP工具，并过滤出python相关工具
+	allTools, err := infra.GetMCPTools(ctx)
 	if err != nil {
-		ilog.EventError(ctx, err, "failed_to_get_fixed_mcp_tools")
+		ilog.EventError(ctx, err, "failed_to_get_mcp_tools")
 		allTools = []tool.BaseTool{} // 如果失败，使用空工具列表
 	}
 
@@ -224,11 +225,11 @@ func NewCoder[I, O any](ctx context.Context) *compose.Graph[I, O] {
 
 	// 创建ReAct智能体，配置代码生成相关的参数和工具
 	agent, err := react.NewAgent(ctx, &react.AgentConfig{
-		MaxStep:               40,                                           // 最大执行步骤数
-		ToolCallingModel:      infra.ChatModel,                             // 工具调用模型
+		MaxStep:               40,                                            // 最大执行步骤数
+		ToolCallingModel:      infra.ChatModel,                               // 工具调用模型
 		ToolsConfig:           compose.ToolsNodeConfig{Tools: researchTools}, // Python相关工具配置
-		MessageModifier:       modifyCoderfunc,                             // 消息长度限制处理器
-		StreamToolCallChecker: toolCallChecker,                             // 流式工具调用检查器
+		MessageModifier:       modifyCoderfunc,                               // 消息长度限制处理器
+		StreamToolCallChecker: toolCallChecker,                               // 流式工具调用检查器
 	})
 	if err != nil {
 		panic(err)
